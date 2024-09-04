@@ -4,9 +4,10 @@ import { AppService } from './app.service';
 import { SocketGateway } from './socket.gateway';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProductModule } from './product/product.module';
+import { AffiliateModule } from './affiliate/affiliate.module';
 
 @Module({
-  imports: [PrismaModule, ProductModule],
+  imports: [PrismaModule, ProductModule, AffiliateModule],
   controllers: [AppController],
   providers: [AppService, SocketGateway],
 })

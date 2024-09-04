@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 async function main() {
   const products = [];
 
-  for (let i = 1; i <= 30; i++) {
+  for (let i = 1; i <= 20; i++) {
     products.push({
       name: `Test Product ${i}`,
       description: `Description for test product ${i}`,
@@ -16,6 +16,14 @@ async function main() {
 
   await prisma.product.createMany({
     data: products,
+  });
+
+  await prisma.affiliate.create({
+    data: {
+      id: 2,
+      name: 'Test',
+      email: 'test@gmail.com',
+    },
   });
 
   console.log('Seeded 30 products');
