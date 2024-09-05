@@ -13,6 +13,36 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        Int        @id @default(autoincrement())
+  name      String
+  email     String     @unique
+  password  String
+  role      Role       @default(user)
+  affiliate Affiliate?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@map("user")
+}
+
+model Affiliate {
+  id              Int             @id @default(autoincrement())
+  userId          Int             @unique
+  commission      Float           @default(15.0)
+  visits          Int             @default(0)
+  visits_today    Int             @default(0)
+  conversion_rate Float           @default(0.0)
+  total_sales     Float           @default(0.0)
+  totalEarnings   Float           @default(0.0)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  user            User            @relation(fields: [userId], references: [id])
+  affiliateLinks  AffiliateLink[]
+
+  @@map("affiliate")
+}
+
 model Product {
   id            Int             @id @default(autoincrement())
   name          String
@@ -24,23 +54,6 @@ model Product {
   affiliateLink AffiliateLink[]
 
   @@map("product")
-}
-
-model Affiliate {
-  id              Int             @id @default(autoincrement())
-  name            String
-  email           String          @unique
-  commission      Float           @default(15.0)
-  visits          Int             @default(0)
-  visits_today    Int             @default(0)
-  conversion_rate Float           @default(0.0)
-  total_sales     Float           @default(0.0)
-  totalEarnings   Float           @default(0.0)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  affiliateLinks  AffiliateLink[]
-
-  @@map("affiliate")
 }
 
 model AffiliateLink {
@@ -59,4 +72,9 @@ model AffiliateLink {
   product   Product   @relation(fields: [productId], references: [id])
 
   @@map("affiliate_link")
+}
+
+enum Role {
+  user
+  affiliate
 }

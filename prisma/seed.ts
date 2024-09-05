@@ -18,13 +18,37 @@ async function main() {
     data: products,
   });
 
-  await prisma.affiliate.create({
-    data: {
-      id: 2,
-      name: 'Test',
-      email: 'test@gmail.com',
-    },
+  const user = [];
+
+  for (let i = 1; i <= 2; i++) {
+    user.push({
+      email: `user${i}@gmail.com`,
+      password: '1234',
+      role: 'user',
+      name: `User ${i}`,
+    });
+  }
+
+  await prisma.user.createMany({
+    data: user,
   });
+
+  for (let i = 1; i <= 2; i++) {
+    const user = await prisma.user.create({
+      data: {
+        email: `affiliate${i}@gmail.com`,
+        password: '1234',
+        role: 'affiliate',
+        name: `Affiliate ${i}`,
+      },
+    });
+
+    await prisma.affiliate.create({
+      data: {
+        userId: user.id,
+      },
+    });
+  }
 
   console.log('Seeded 30 products');
 }

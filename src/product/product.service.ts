@@ -1,20 +1,24 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { BuyDto } from './dto/buy,dto';
 
 @Injectable()
 export class ProductService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getAllProducts() {
-    return await this.prisma.product.findMany({
-      include: {
-        affiliateLink: {
-          where: {
-            affiliateId: 2,
+  async getAllProducts(affiliateId?: number) {
+    if (affiliateId) {
+      return await this.prisma.product.findMany({
+        include: {
+          affiliateLink: {
+            where: {
+              affiliateId: affiliateId,
+            },
           },
         },
-      },
-    });
+      });
+    }
+    return await this.prisma.product.findMany();
   }
 
   async getProductById(id: number) {
@@ -31,11 +35,10 @@ export class ProductService {
     return prod;
   }
 
-  async buyProduct(productId: number) {
-    const affiliateId = 2;
+  async buyProduct(dto: BuyDto) {
     const product = await this.prisma.product.findFirst({
       where: {
-        id: productId,
+        id: dto.productId,
       },
     });
 
@@ -45,7 +48,7 @@ export class ProductService {
 
     const affiliateData = await this.prisma.affiliate.findFirst({
       where: {
-        id: affiliateId,
+        id: dto.affiliateId,
       },
       include: {
         affiliateLinks: true,
@@ -59,7 +62,7 @@ export class ProductService {
     const affiliateLink = await this.prisma.affiliateLink.findFirst({
       where: {
         affiliateId: affiliateData.id,
-        productId: productId,
+        productId: dto.productId,
       },
     });
 
@@ -72,13 +75,14 @@ export class ProductService {
     console.log('saless', sales, 'cliks', clicks);
 
     const comissionEarned = (product.price * affiliateData.commission) / 100;
-
+    const conversionRateLink = clicks === 0 ? 0 : (sales / clicks) * 100;
     console.log('comission earned', comissionEarned);
+    console.log('comission rate link', conversionRateLink);
 
     await this.prisma.affiliateLink.update({
       where: {
         id: affiliateLink.id,
-        productId: productId,
+        productId: dto.productId,
       },
       data: {
         sales: {
@@ -90,7 +94,7 @@ export class ProductService {
         commissionEarned: {
           increment: comissionEarned,
         },
-        conversionRate: (sales / clicks) * 100,
+        conversionRate: conversionRateLink,
       },
     });
 

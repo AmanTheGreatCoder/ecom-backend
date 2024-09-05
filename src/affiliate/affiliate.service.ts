@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { CreateAffiliateLinkDto } from './dto/create-affiliate-link.dto';
 
 @Injectable()
 export class AffiliateService {
@@ -15,11 +16,10 @@ export class AffiliateService {
     });
   }
 
-  async createAffiliateLink(productId: number) {
-    const affiliateId = 2;
+  async createAffiliateLink(dto: CreateAffiliateLinkDto) {
     const product = await this.prisma.product.findFirst({
       where: {
-        id: productId,
+        id: dto.productId,
       },
     });
 
@@ -29,7 +29,7 @@ export class AffiliateService {
 
     const affiliate = await this.prisma.affiliate.findFirst({
       where: {
-        id: affiliateId,
+        id: dto.affiliateId,
       },
     });
 
@@ -39,10 +39,12 @@ export class AffiliateService {
 
     const affiliateLink = await this.prisma.affiliateLink.findFirst({
       where: {
-        productId: productId,
-        affiliateId: affiliateId,
+        productId: dto.productId,
+        affiliateId: dto.affiliateId,
       },
     });
+
+    console.log('affiliate Linkkkk', affiliateLink);
 
     if (affiliateLink?.id) {
       throw new BadRequestException('Affiliate Link already exists');
@@ -50,9 +52,9 @@ export class AffiliateService {
 
     return await this.prisma.affiliateLink.create({
       data: {
-        affiliateId: 2,
-        productId: productId,
-        link: `http://localhost:3000/products/${productId}?code=2`,
+        affiliateId: dto.affiliateId,
+        productId: dto.productId,
+        link: `http://localhost:3000/products/${dto.productId}?code=${dto.affiliateId}`,
       },
     });
   }
@@ -125,8 +127,7 @@ export class AffiliateService {
     });
   }
 
-  async getAllAffiliateLinksData() {
-    const affiliateId = 2;
+  async getAllAffiliateLinksData(affiliateId: number) {
     const affiliateData = await this.prisma.affiliate.findFirst({
       where: {
         id: affiliateId,

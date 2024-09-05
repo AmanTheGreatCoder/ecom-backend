@@ -1,20 +1,30 @@
-import { Controller, Get, Param, ParseIntPipe, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { AffiliateService } from './affiliate.service';
+import { CreateAffiliateLinkDto } from './dto/create-affiliate-link.dto';
 
 @ApiTags('Affiliate')
 @Controller('affiliate')
 export class AffiliateController {
   constructor(private readonly affiliateService: AffiliateService) {}
 
-  @Post('/link/:id')
-  async createAffiliateLink(@Param('id', ParseIntPipe) id: number) {
-    return await this.affiliateService.createAffiliateLink(id);
+  @Post('/link')
+  async createAffiliateLink(@Body() dto: CreateAffiliateLinkDto) {
+    return await this.affiliateService.createAffiliateLink(dto);
   }
 
-  @Get('/links')
-  async getAllAffiliateLinksForAffiliate() {
-    return await this.affiliateService.getAllAffiliateLinksData();
+  @Get('/links/:affiliateId')
+  async getAllAffiliateLinksForAffiliate(
+    @Param('affiliateId', ParseIntPipe) affiliateId: number,
+  ) {
+    return await this.affiliateService.getAllAffiliateLinksData(affiliateId);
   }
 
   @Post('/click/:id')

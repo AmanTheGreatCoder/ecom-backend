@@ -5,11 +5,10 @@ import { PrismaService } from './prisma/prisma.service';
 export class AppService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getDashboardData() {
-    const id = 2;
+  async getDashboardData(affiliateId: number) {
     const affiliateData = await this.prisma.affiliate.findUnique({
       where: {
-        id: id,
+        id: affiliateId,
       },
       include: {
         affiliateLinks: {
@@ -23,7 +22,6 @@ export class AppService {
     if (!affiliateData.id) {
       throw new BadRequestException('Affiliate not found');
     }
-    console.log('affiliate', affiliateData);
 
     return {
       conversionRate: affiliateData.conversion_rate,
