@@ -1,14 +1,6 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  ParseIntPipe,
-  Post,
-} from '@nestjs/common';
-import { ProductService } from './product.service';
+import { Controller, Get, Param, ParseIntPipe, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { BuyDto } from 'src/affiliate/dto/buy.dto';
+import { ProductService } from './product.service';
 
 @ApiTags('Products')
 @Controller('products')
@@ -21,8 +13,8 @@ export class ProductController {
   }
 
   @Post('buy/:id')
-  async buyProduct(@Body() dto: BuyDto) {
-    return await this.productService.buyProduct(dto);
+  async buyProduct(@Param('id', ParseIntPipe) id: number) {
+    return await this.productService.buyProduct(id);
   }
 
   @Get(':id')

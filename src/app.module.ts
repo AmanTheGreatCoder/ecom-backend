@@ -5,9 +5,15 @@ import { SocketGateway } from './socket.gateway';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProductModule } from './product/product.module';
 import { AffiliateModule } from './affiliate/affiliate.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
-  imports: [PrismaModule, ProductModule, AffiliateModule],
+  imports: [
+    ScheduleModule.forRoot(),
+    PrismaModule,
+    ProductModule,
+    AffiliateModule,
+  ],
   controllers: [AppController],
   providers: [AppService, SocketGateway],
 })

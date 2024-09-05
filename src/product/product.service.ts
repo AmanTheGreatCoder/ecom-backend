@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { BuyDto } from 'src/affiliate/dto/buy.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -7,7 +6,15 @@ export class ProductService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getAllProducts() {
-    return await this.prisma.product.findMany();
+    return await this.prisma.product.findMany({
+      include: {
+        affiliateLink: {
+          where: {
+            affiliateId: 2,
+          },
+        },
+      },
+    });
   }
 
   async getProductById(id: number) {
@@ -24,10 +31,11 @@ export class ProductService {
     return prod;
   }
 
-  async buyProduct(dto: BuyDto) {
+  async buyProduct(productId: number) {
+    const affiliateId = 2;
     const product = await this.prisma.product.findFirst({
       where: {
-        id: dto.id,
+        id: productId,
       },
     });
 
@@ -35,31 +43,42 @@ export class ProductService {
       throw new BadRequestException('Product not found');
     }
 
-    const affiliate = await this.prisma.affiliate.findFirst({
+    const affiliateData = await this.prisma.affiliate.findFirst({
       where: {
-        id: dto.affiliateId,
+        id: affiliateId,
+      },
+      include: {
+        affiliateLinks: true,
       },
     });
 
-    if (!affiliate.id) {
+    if (!affiliateData.id) {
       throw new BadRequestException('Affiliate not found');
     }
 
     const affiliateLink = await this.prisma.affiliateLink.findFirst({
       where: {
-        affiliateId: affiliate.id,
+        affiliateId: affiliateData.id,
+        productId: productId,
       },
     });
 
-    if (!affiliateLink.id) {
+    if (!affiliateLink?.id) {
       throw new BadRequestException('Invalid affiliate link');
     }
 
     const { sales, clicks } = affiliateLink;
 
+    console.log('saless', sales, 'cliks', clicks);
+
+    const comissionEarned = (product.price * affiliateData.commission) / 100;
+
+    console.log('comission earned', comissionEarned);
+
     await this.prisma.affiliateLink.update({
       where: {
         id: affiliateLink.id,
+        productId: productId,
       },
       data: {
         sales: {
@@ -69,12 +88,38 @@ export class ProductService {
           increment: product.price,
         },
         commissionEarned: {
-          increment:
-            ((affiliateLink.totalRevenue + product.price) *
-              affiliate.commission) /
-            100,
+          increment: comissionEarned,
         },
         conversionRate: (sales / clicks) * 100,
+      },
+    });
+
+    const totalConversionRate = affiliateData.affiliateLinks.reduce(
+      (acc, link) => acc + link.conversionRate,
+      0,
+    );
+
+    const conversionRate =
+      affiliateData.affiliateLinks.length > 0
+        ? parseFloat(
+            (totalConversionRate / affiliateData.affiliateLinks.length).toFixed(
+              2,
+            ),
+          )
+        : 0.0;
+
+    await this.prisma.affiliate.update({
+      where: {
+        id: affiliateData.id,
+      },
+      data: {
+        conversion_rate: conversionRate,
+        total_sales: {
+          increment: product.price,
+        },
+        totalEarnings: {
+          increment: comissionEarned,
+        },
       },
     });
   }

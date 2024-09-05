@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 async function main() {
   const products = [];
 
-  for (let i = 1; i <= 20; i++) {
+  for (let i = 1; i <= 10; i++) {
     products.push({
       name: `Test Product ${i}`,
       description: `Description for test product ${i}`,
