@@ -59,10 +59,20 @@ export class AffiliateService {
     });
   }
 
-  async registerClick(id: number) {
+  async registerClick(affiliateLinkId: number) {
+    const affiliateLink = await this.prisma.affiliateLink.findFirst({
+      where: {
+        id: affiliateLinkId,
+      },
+    });
+
+    if (!affiliateLink?.id) {
+      throw new BadRequestException('Invalid affiliate link');
+    }
+
     const affiliateData = await this.prisma.affiliate.findFirst({
       where: {
-        id: id,
+        id: affiliateLink.affiliateId,
       },
       include: {
         affiliateLinks: true,
@@ -71,16 +81,6 @@ export class AffiliateService {
 
     if (!affiliateData?.id) {
       throw new BadRequestException('Affiliate not found');
-    }
-
-    const affiliateLink = await this.prisma.affiliateLink.findFirst({
-      where: {
-        affiliateId: id,
-      },
-    });
-
-    if (!affiliateLink?.id) {
-      throw new BadRequestException('Invalid affiliate link');
     }
 
     const totalConversionRate = affiliateData.affiliateLinks.reduce(
@@ -113,7 +113,7 @@ export class AffiliateService {
 
     await this.prisma.affiliate.update({
       where: {
-        id: id,
+        id: affiliateData.id,
       },
       data: {
         visits: {

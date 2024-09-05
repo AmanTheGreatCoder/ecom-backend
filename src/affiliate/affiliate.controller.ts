@@ -27,8 +27,10 @@ export class AffiliateController {
     return await this.affiliateService.getAllAffiliateLinksData(affiliateId);
   }
 
-  @Post('/click/:id')
-  async registerClick(@Param('id', ParseIntPipe) id: number) {
-    return await this.affiliateService.registerClick(id);
+  @Post('/click/:affiliateLinkId')
+  async registerClick(
+    @Param('affiliateLinkId', ParseIntPipe) affiliateLinkId: number,
+  ) {
+    return await this.affiliateService.registerClick(affiliateLinkId);
   }
 }
