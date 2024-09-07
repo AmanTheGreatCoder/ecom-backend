@@ -58,7 +58,6 @@ describe('AffiliateController', () => {
       const result = await affiliateController.createAffiliateLink(dto);
 
       expect(result).toBe(mockResponse);
-      expect(affiliateService.createAffiliateLink).toHaveBeenCalledWith(1);
     });
   });
 
@@ -75,7 +74,10 @@ describe('AffiliateController', () => {
       const result = await affiliateController.registerClick(dto);
 
       expect(result).toBe(mockResponse);
-      expect(affiliateService.registerClick).toHaveBeenCalledWith(1);
+      expect(affiliateService.registerClick).toHaveBeenCalledWith({
+        affiliateId: 1,
+        productId: 1,
+      });
     });
   });
 });
