@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateAffiliateLinkDto } from './dto/create-affiliate-link.dto';
+import { RegisterClickDto } from './dto/register-click.dto';
 
 @Injectable()
 export class AffiliateService {
@@ -59,23 +60,10 @@ export class AffiliateService {
     });
   }
 
-  async registerClick(affiliateLinkId: number) {
-    const affiliateLink = await this.prisma.affiliateLink.findFirst({
-      where: {
-        id: affiliateLinkId,
-      },
-    });
-
-    if (!affiliateLink?.id) {
-      throw new BadRequestException('Invalid affiliate link');
-    }
-
+  async registerClick(dto: RegisterClickDto) {
     const affiliateData = await this.prisma.affiliate.findFirst({
       where: {
-        id: affiliateLink.affiliateId,
-      },
-      include: {
-        affiliateLinks: true,
+        id: dto.affiliateId,
       },
     });
 
@@ -83,25 +71,22 @@ export class AffiliateService {
       throw new BadRequestException('Affiliate not found');
     }
 
-    const totalConversionRate = affiliateData.affiliateLinks.reduce(
-      (acc, link) => acc + link.conversionRate,
-      0,
-    );
+    const affiliateLink = await this.prisma.affiliateLink.findFirst({
+      where: {
+        AND: [{ affiliateId: dto.affiliateId }, { productId: dto.productId }],
+      },
+    });
+
+    if (!affiliateLink?.id) {
+      throw new BadRequestException('Invalid affiliate link');
+    }
 
     const { sales, clicks } = affiliateLink;
-
-    const conversionRate =
-      affiliateData.affiliateLinks.length > 0
-        ? parseFloat(
-            (totalConversionRate / affiliateData.affiliateLinks.length).toFixed(
-              2,
-            ),
-          )
-        : 0.0;
 
     await this.prisma.affiliateLink.update({
       where: {
         id: affiliateLink.id,
+        productId: dto.productId,
       },
       data: {
         clicks: {
@@ -110,6 +95,25 @@ export class AffiliateService {
         conversionRate: (sales / (clicks + 1)) * 100,
       },
     });
+    const affiliateLinks = await this.prisma.affiliateLink.findMany({
+      where: {
+        AND: [{ affiliateId: dto.affiliateId }, { productId: dto.productId }],
+      },
+    });
+
+    if (affiliateLinks.length <= 0) {
+      throw new BadRequestException('Affiliate link not found');
+    }
+
+    const totalConversionRate = affiliateLinks.reduce(
+      (acc, link) => acc + link.conversionRate,
+      0,
+    );
+
+    const conversionRate =
+      affiliateLinks.length > 0
+        ? parseFloat((totalConversionRate / affiliateLinks.length).toFixed(2))
+        : 0.0;
 
     await this.prisma.affiliate.update({
       where: {
